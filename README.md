@@ -2,7 +2,7 @@
 
 ## v0.1 Alpha
 
-Bu proje aktif geliştirme aşamasındaki bir alpha build'dir. NBA full game videolarini play-by-play verisi ve scoreboard OCR kullanarak condensed videoya donusturmeyi amaclar. Mevcut surum deneysel prototiptir; OCR kalibrasyonu, farkli yayin formatlari ve possession kirpma mantigi henuz gelistirilmektedir. Uretim kalitesinde ve hatasiz cikti garanti edilmez.
+Bu proje aktif geliştirme aşamasındaki bir alpha build'dir. NBA full game videolarini play-by-play verisi ve scoreboard OCR kullanarak sadece topun oyunda kaldığı anları tutarak 2 saatlik maç tekrarlarını 40 dakikalık tekrarlara donusturmeyi amaclar. Mevcut surum deneysel prototiptir; OCR kalibrasyonu, farkli yayin formatlari ve possession kirpma mantigi henuz gelistirilmektedir. Uretim kalitesinde ve hatasiz cikti garanti edilmez.
 
 Katki, hata raporu ve test geri bildirimleri gelistirme sureci icin faydalidir.
 
