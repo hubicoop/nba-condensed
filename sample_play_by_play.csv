@@ -1,0 +1,6 @@
+period,clock,event_type,video_time,description
+1,12:00,Inbound,35.20,Home ball inbound
+1,11:42,Made Shot,53.70,Made 2PT shot
+1,11:42,Inbound,61.10,Away ball inbound
+1,11:20,Defensive Rebound,83.40,Defensive rebound
+1,11:02,Turnover,101.20,Bad pass turnover
