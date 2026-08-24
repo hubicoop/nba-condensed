@@ -1,5 +1,11 @@
 # NBA Condensed
 
+## v0.1 Alpha
+
+Bu proje aktif geliştirme aşamasındaki bir alpha build'dir. NBA full game videolarini play-by-play verisi ve scoreboard OCR kullanarak condensed videoya donusturmeyi amaclar. Mevcut surum deneysel prototiptir; OCR kalibrasyonu, farkli yayin formatlari ve possession kirpma mantigi henuz gelistirilmektedir. Uretim kalitesinde ve hatasiz cikti garanti edilmez.
+
+Katki, hata raporu ve test geri bildirimleri gelistirme sureci icin faydalidir.
+
 CachyOS/Linux icin Python + PySide6 masaustu uygulamasi. Uygulama, kullanicinin yasal olarak eristigi full game videosu ve play-by-play dosyasindan, inbound sonrasindaki hazirlik suresini kirparak pozisyonlari birlestirir.
 
 ## Gereksinimler
