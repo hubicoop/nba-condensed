@@ -43,9 +43,19 @@ class RenderWorker(QObject):
             self.status.emit("Play-by-play okunuyor...")
             if self.source.startswith("http"):
                 game_id = extract_game_id(self.source)
+                if not game_id:
+                    raise ValueError("NBA linkinden Game ID bulunamadi.")
                 with tempfile.TemporaryDirectory() as temp_dir:
-                    path = download_playbyplay(game_id, Path(temp_dir) / "playbyplay.json")
-                    events = load_nba_json(path)
+                    try:
+                        path = download_playbyplay(game_id, Path(temp_dir) / "playbyplay.json")
+                        events = load_nba_json(path)
+                    except Exception as error:
+                        if not self.plays:
+                            raise ValueError(f"NBA servisi 403 verdi ve CSV fallback secilmedi: {error}") from error
+                        self.status.emit("NBA servisi engelledi; secilen CSV fallback olarak kullaniliyor...")
+                        events = load_nba_csv(self.plays, game_id)
+                        if not events:
+                            raise ValueError(f"NBA JSON ve CSV fallback ile {game_id} bulunamadi.") from error
             elif self.source:
                 events = load_nba_csv(self.plays, self.source)
             else:
