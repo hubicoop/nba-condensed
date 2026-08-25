@@ -8,7 +8,6 @@ import re
 import subprocess
 import urllib.request
 import urllib.error
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -27,6 +26,23 @@ class Event:
 class Segment:
     start: float
     end: float
+
+
+@dataclass(frozen=True)
+class CalibrationPoint:
+    game_seconds: float
+    video_seconds: float
+
+
+@dataclass(frozen=True)
+class Possession:
+    period: int
+    start_clock: str
+    end_clock: str
+    start_event: str
+    end_event: str
+    start_video: float
+    end_video: float
 
 
 def _clock_to_seconds(value: object) -> float:
@@ -182,6 +198,34 @@ def apply_clock_mapping(events: list[Event], clock_map: dict[int, list[tuple[flo
     return mapped
 
 
+def map_clock_to_video(clock: str, points: list[CalibrationPoint]) -> float:
+    if len(points) < 2:
+        raise ValueError("En az iki kalibrasyon noktasi gerekli.")
+    ordered = sorted(points, key=lambda point: point.game_seconds, reverse=True)
+    value = _clock_to_seconds(clock)
+    if value > ordered[0].game_seconds or value < ordered[-1].game_seconds:
+        raise ValueError(f"{clock} kalibrasyon araligi disinda.")
+    for upper, lower in zip(ordered, ordered[1:]):
+        if lower.game_seconds <= value <= upper.game_seconds:
+            ratio = (upper.game_seconds - value) / (upper.game_seconds - lower.game_seconds)
+            return upper.video_seconds + ratio * (lower.video_seconds - upper.video_seconds)
+    return ordered[-1].video_seconds
+
+
+def map_events_with_calibration(events: list[Event], calibration: dict[int, list[CalibrationPoint]]) -> list[Event]:
+    mapped = []
+    for event in events:
+        points = calibration.get(event.period, [])
+        if len(points) < 2:
+            continue
+        try:
+            video_time = map_clock_to_video(event.clock, points)
+        except ValueError:
+            continue
+        mapped.append(Event(event.period, event.event_type, video_time, event.clock, event.description))
+    return mapped
+
+
 def validate_clock_mapping(events: list[Event], clock_map: dict[int, list[tuple[float, float]]],
                            periods: set[int] | None = None) -> None:
     required = periods or {event.period for event in events}
@@ -266,6 +310,52 @@ def _is_defensive_rebound(event: Event) -> bool:
 def _is_live_start(event: Event) -> bool:
     return (_is_defensive_rebound(event) or _is_steal(event)
             or _contains(event, ("jump ball", "period start")))
+
+
+def _is_terminal(event: Event) -> bool:
+    return (_contains(event, ("made shot", "turnover", "offensive foul", "violation"))
+            or _is_defensive_rebound(event)
+            or _contains(event, ("period end", "end period", "quarter end")))
+
+
+def build_possessions(events: list[Event]) -> list[tuple[Event, Event, float]]:
+    """Group CSV actions into possessions; return start event, end event, lead."""
+    events = sorted(events, key=lambda event: event.video_time)
+    possessions: list[tuple[Event, Event, float]] = []
+    current: list[Event] = []
+    for event in events:
+        if current and event.period != current[-1].period:
+            possessions.append((current[0], current[-1], 1.5))
+            current = []
+        if not current:
+            current = [event]
+        else:
+            current.append(event)
+        if _is_terminal(event):
+            possessions.append((current[0], current[-1], 1.5))
+            current = []
+    if current:
+        possessions.append((current[0], current[-1], 1.5))
+    return possessions
+
+
+def possession_segments(events: list[Event], video_duration: float,
+                        normal_lead: float = 5.5, live_lead: float = 1.0,
+                        tail: float = 2.5) -> list[Segment]:
+    segments = []
+    for start_event, end_event, _ in build_possessions(events):
+        lead = live_lead if _is_live_start(start_event) else normal_lead
+        start = max(0.0, start_event.video_time - lead)
+        end = min(video_duration, end_event.video_time + tail)
+        if end > start + 0.25:
+            segments.append(Segment(start, end))
+    merged = []
+    for segment in segments:
+        if merged and segment.start <= merged[-1].end:
+            merged[-1] = Segment(merged[-1].start, max(merged[-1].end, segment.end))
+        else:
+            merged.append(segment)
+    return merged
 
 
 def build_segments(events: list[Event], video_duration: float,

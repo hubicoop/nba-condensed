@@ -6,7 +6,7 @@ Bu proje aktif geliştirme aşamasındaki bir alpha build'dir. NBA full game vid
 
 Katki, hata raporu ve test geri bildirimleri gelistirme sureci icin faydalidir.
 
-CachyOS/Linux icin Python + PySide6 masaustu uygulamasi. Uygulama, kullanicinin yasal olarak eristigi full game videosu ve play-by-play dosyasindan, inbound sonrasindaki hazirlik suresini kirparak pozisyonlari birlestirir.
+CachyOS/Linux icin Python + PySide6 masaustu uygulamasi. Uygulama, kullanicinin yasal olarak eristigi full game videosu ve play-by-play dosyasindan possession zincirlerini olusturur. v0.1 alpha surumunde yalnizca 1. periyot islenir ve video zamani manuel kalibrasyon noktalariyla eslenir.
 
 ## Gereksinimler
 
@@ -41,7 +41,7 @@ JSON icin ayni alanlara sahip bir event listesi kullanilabilir:
 ]
 ```
 
-`video_time` yoksa uygulama bu surumde dosyayi reddeder. Mac saati ile video saati arasinda reklam ve mola farklari oldugu icin sessizce hatali klip uretmek yerine bu durum acikca bildirilmektedir.
+NBA sezon CSV'sinde `video_time` bulunmasi gerekmez. Uygulama C sutunundaki oyun saatini kullanir; arayuzde en az iki adet `oyun saati -> video saniyesi` kalibrasyon noktasi girilmelidir. Ornegin `12:00 -> 42.0` ve `00:00 -> 1850.0`.
 
 ## Calistirma
 
@@ -50,4 +50,4 @@ cd /home/hubi/nba-condensed
 python main.py
 ```
 
-Uygulama varsayilan olarak inbound'dan 5.5 saniye sonrasini baslangic, terminal olaydan 2.5 saniye sonrasini bitis kabul eder. Savunma ribaundu, steal, turnover ve jump ball gibi canli possession baslangiclari 1.5 saniyelik payla korunur; offensive rebound ayni pozisyonun devamidir.
+Varsayilan kirpma parametreleri: normal possession icin 5.5 saniye lead, steal/defensive rebound gibi canli baslangiclar icin 1 saniye lead ve pozisyon sonu icin 2.5 saniye tail. Offensive rebound, foul ve free throw dizileri ayni possession zincirinde tutulur. Ilk periyot testleri tamamlanmadan tum maca gecilmemelidir.
